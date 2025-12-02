@@ -91,6 +91,36 @@
             display: flex;
             justify-content: center;
         }
+
+        .error {
+            border-color: #dc3545 !important;
+            background-color: #fff5f5;
+        }
+        
+        .error-box {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 25px;
+            color: #721c24;
+        }
+        
+        .error-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #721c24;
+        }
+        
+        .error-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .error-box li {
+            margin: 5px 0;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -98,6 +128,14 @@
         <h1 th:text="${product.id != null} ? '✏️ Edit Product' : '➕ Add New Product'">Product Form</h1>
         
         <form th:action="@{/products/save}" th:object="${product}" method="post">
+            <!-- Error Messages Section -->
+            <div th:if="${#fields.hasErrors('*')}" class="error-box">
+                <h3>⚠️ Please fix the following errors:</h3>
+                <ul>
+                    <li th:each="err : ${#fields.errors('*')}" th:text="${err}">Error message</li>
+                </ul>
+            </div>
+            
             <!-- Hidden ID field for updates -->
             <input type="hidden" th:field="*{id}" />
             
@@ -105,7 +143,8 @@
                 <label for="productCode">Product Code *</label>
                 <input type="text" 
                        id="productCode" 
-                       th:field="*{productCode}" 
+                       th:field="*{productCode}"
+                       th:errorclass="error"
                        placeholder="Enter product code (e.g., P001)"
                        required />
             </div>
@@ -114,7 +153,8 @@
                 <label for="name">Product Name *</label>
                 <input type="text" 
                        id="name" 
-                       th:field="*{name}" 
+                       th:field="*{name}"
+                       th:errorclass="error"
                        placeholder="Enter product name"
                        required />
             </div>
@@ -123,9 +163,11 @@
                 <label for="price">Price ($) *</label>
                 <input type="number" 
                        id="price" 
-                       th:field="*{price}" 
+                       th:field="*{price}"
+                       th:errorclass="error"
                        step="0.01" 
-                       min="0"
+                       min="0.01"
+                       max="999999.99"
                        placeholder="0.00"
                        required />
             </div>
@@ -134,7 +176,8 @@
                 <label for="quantity">Quantity *</label>
                 <input type="number" 
                        id="quantity" 
-                       th:field="*{quantity}" 
+                       th:field="*{quantity}"
+                       th:errorclass="error"
                        min="0"
                        placeholder="0"
                        required />
@@ -142,7 +185,10 @@
             
             <div class="form-group">
                 <label for="category">Category *</label>
-                <select id="category" th:field="*{category}" required>
+                <select id="category" 
+                        th:field="*{category}"
+                        th:errorclass="error"
+                        required>
                     <option value="">Select category</option>
                     <option value="Electronics">Electronics</option>
                     <option value="Furniture">Furniture</option>

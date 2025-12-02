@@ -136,6 +136,101 @@
             display: flex;
             gap: 5px;
         }
+        
+        .advanced-search-container {
+            background-color: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .advanced-search-title {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .search-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .toggle-search {
+            cursor: pointer;
+            color: #667eea;
+            text-decoration: underline;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        
+        .filter-sort-container {
+            background-color: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-sort-title {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .filter-sort-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
     </style>
 </head>
 <body>
@@ -154,7 +249,10 @@
         
         <!-- Actions -->
         <div class="actions">
-            <a th:href="@{/products/new}" class="btn btn-primary">➕ Add New Product</a>
+            <div style="display: flex; gap: 10px;">
+                <a th:href="@{/products/new}" class="btn btn-primary">➕ Add New Product</a>
+                <a th:href="@{/dashboard}" class="btn btn-primary">📊 Dashboard</a>
+            </div>
             
             <form th:action="@{/products/search}" method="get" class="search-form">
                 <input type="text" name="keyword" th:value="${keyword}" placeholder="Search products..." />
@@ -162,16 +260,160 @@
             </form>
         </div>
         
+        <!-- Combined Filter and Sort Interface -->
+        <div class="filter-sort-container">
+            <div class="filter-sort-title">
+                🔧 Filter & Sort Options
+            </div>
+            <form th:action="@{/products}" method="get" id="filterSortForm">
+                <div class="filter-sort-grid">
+                    <div class="form-group">
+                        <label for="categoryFilter">Category:</label>
+                        <select id="categoryFilter" name="category" class="form-control">
+                            <option value="">All Categories</option>
+                            <option th:each="cat : ${categories}" 
+                                    th:value="${cat}" 
+                                    th:text="${cat}"
+                                    th:selected="${cat == selectedCategory}">
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sortBySelect">Sort By:</label>
+                        <select id="sortBySelect" name="sortBy" class="form-control">
+                            <option value="">Default</option>
+                            <option value="id" th:selected="${sortBy == 'id'}">ID</option>
+                            <option value="productCode" th:selected="${sortBy == 'productCode'}">Product Code</option>
+                            <option value="name" th:selected="${sortBy == 'name'}">Name</option>
+                            <option value="price" th:selected="${sortBy == 'price'}">Price</option>
+                            <option value="quantity" th:selected="${sortBy == 'quantity'}">Quantity</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sortDirSelect">Sort Direction:</label>
+                        <select id="sortDirSelect" name="sortDir" class="form-control">
+                            <option value="asc" th:selected="${sortDir == 'asc' or sortDir == null}">Ascending ↑</option>
+                            <option value="desc" th:selected="${sortDir == 'desc'}">Descending ↓</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-buttons">
+                        <input type="hidden" name="page" value="0" />
+                        <input type="hidden" name="size" value="10" />
+                        <button type="submit" class="btn btn-primary">✓ Apply</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearFilters()">✕ Clear</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Toggle Advanced Search -->
+        <a href="#" class="toggle-search" onclick="toggleAdvancedSearch(); return false;">
+            🔍 Show Advanced Search
+        </a>
+        
+        <!-- Advanced Search Form -->
+        <div id="advancedSearchForm" class="advanced-search-container" style="display: none;">
+            <div class="advanced-search-title">🔎 Advanced Search</div>
+            <form th:action="@{/products/advanced-search}" method="get">
+                <div class="search-grid">
+                    <div class="form-group">
+                        <label for="name">Product Name:</label>
+                        <input type="text" id="name" name="name" th:value="${searchName}" 
+                               placeholder="Enter product name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="category">Category:</label>
+                        <select id="category" name="category">
+                            <option value="">All Categories</option>
+                            <option th:each="cat : ${categories}" 
+                                    th:value="${cat}" 
+                                    th:text="${cat}"
+                                    th:selected="${cat == searchCategory}">
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="minPrice">Min Price ($):</label>
+                        <input type="number" id="minPrice" name="minPrice" th:value="${searchMinPrice}" 
+                               step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maxPrice">Max Price ($):</label>
+                        <input type="number" id="maxPrice" name="maxPrice" th:value="${searchMaxPrice}" 
+                               step="0.01" min="0" placeholder="9999.99">
+                    </div>
+                </div>
+                
+                <div class="search-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="clearAdvancedSearch()">
+                        Clear
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        🔍 Search
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Active Filters Display -->
+        <div th:if="${selectedCategory != null or sortBy != null}" 
+             style="background-color: #e7f3ff; border-left: 4px solid #667eea; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px;">
+            <strong>Active Filters:</strong>
+            <span th:if="${selectedCategory != null}" style="margin-left: 10px;">
+                📁 Category: <strong th:text="${selectedCategory}"></strong>
+            </span>
+            <span th:if="${sortBy != null}" style="margin-left: 10px;">
+                🔄 Sorted by: <strong th:text="${sortBy}"></strong> 
+                <span th:text="${sortDir == 'desc' ? '↓' : '↑'}"></span>
+            </span>
+        </div>
+        
         <!-- Products Table -->
         <div th:if="${products != null and !products.isEmpty()}">
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Code</th>
-                        <th>Name</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
+                        <th>
+                            <a th:href="@{/products(sortBy='id',sortDir=${sortDir=='asc'?'desc':'asc'},category=${selectedCategory},page=0,size=10)}" 
+                               style="color: white; text-decoration: none; cursor: pointer;">
+                                ID
+                                <span th:if="${sortBy=='id'}" th:text="${sortDir=='asc'?'↑':'↓'}"></span>
+                            </a>
+                        </th>
+                        <th>
+                            <a th:href="@{/products(sortBy='productCode',sortDir=${sortDir=='asc'?'desc':'asc'},category=${selectedCategory},page=0,size=10)}" 
+                               style="color: white; text-decoration: none; cursor: pointer;">
+                                Code
+                                <span th:if="${sortBy=='productCode'}" th:text="${sortDir=='asc'?'↑':'↓'}"></span>
+                            </a>
+                        </th>
+                        <th>
+                            <a th:href="@{/products(sortBy='name',sortDir=${sortDir=='asc'?'desc':'asc'},category=${selectedCategory},page=0,size=10)}" 
+                               style="color: white; text-decoration: none; cursor: pointer;">
+                                Name
+                                <span th:if="${sortBy=='name'}" th:text="${sortDir=='asc'?'↑':'↓'}"></span>
+                            </a>
+                        </th>
+                        <th>
+                            <a th:href="@{/products(sortBy='price',sortDir=${sortDir=='asc'?'desc':'asc'},category=${selectedCategory},page=0,size=10)}" 
+                               style="color: white; text-decoration: none; cursor: pointer;">
+                                Price
+                                <span th:if="${sortBy=='price'}" th:text="${sortDir=='asc'?'↑':'↓'}"></span>
+                            </a>
+                        </th>
+                        <th>
+                            <a th:href="@{/products(sortBy='quantity',sortDir=${sortDir=='asc'?'desc':'asc'},category=${selectedCategory},page=0,size=10)}" 
+                               style="color: white; text-decoration: none; cursor: pointer;">
+                                Quantity
+                                <span th:if="${sortBy=='quantity'}" th:text="${sortDir=='asc'?'↑':'↓'}"></span>
+                            </a>
+                        </th>
                         <th>Category</th>
                         <th>Actions</th>
                     </tr>
@@ -199,10 +441,107 @@
             </table>
         </div>
         
+        <!-- Pagination Controls -->
+        <div th:if="${totalPages != null and totalPages > 1}" style="margin-top: 20px; text-align: center;">
+            <div style="display: inline-flex; gap: 5px; align-items: center;">
+                <!-- Previous Button -->
+                <a th:if="${currentPage > 0}" 
+                   th:href="${searchName != null or searchCategory != null or searchMinPrice != null or searchMaxPrice != null ? 
+                             '/products/advanced-search?page=' + (currentPage - 1) + '&size=10&name=' + (searchName ?: '') + '&category=' + (searchCategory ?: '') + '&minPrice=' + (searchMinPrice ?: '') + '&maxPrice=' + (searchMaxPrice ?: '') : 
+                             (keyword != null ? '/products/search?keyword=' + keyword + '&page=' + (currentPage - 1) + '&size=10' : 
+                             '/products?page=' + (currentPage - 1) + '&size=10&category=' + (selectedCategory ?: '') + '&sortBy=' + (sortBy ?: '') + '&sortDir=' + (sortDir ?: ''))}"
+                   class="btn btn-secondary btn-sm">
+                    ← Previous
+                </a>
+                <span th:if="${currentPage == 0}" class="btn btn-secondary btn-sm" style="opacity: 0.5; cursor: not-allowed;">
+                    ← Previous
+                </span>
+                
+                <!-- Page Numbers -->
+                <span th:each="i : ${#numbers.sequence(0, totalPages - 1)}" style="margin: 0 2px;">
+                    <a th:if="${i != currentPage}" 
+                       th:href="${searchName != null or searchCategory != null or searchMinPrice != null or searchMaxPrice != null ? 
+                                 '/products/advanced-search?page=' + i + '&size=10&name=' + (searchName ?: '') + '&category=' + (searchCategory ?: '') + '&minPrice=' + (searchMinPrice ?: '') + '&maxPrice=' + (searchMaxPrice ?: '') : 
+                                 (keyword != null ? '/products/search?keyword=' + keyword + '&page=' + i + '&size=10' : 
+                                 '/products?page=' + i + '&size=10&category=' + (selectedCategory ?: '') + '&sortBy=' + (sortBy ?: '') + '&sortDir=' + (sortDir ?: ''))}"
+                       th:text="${i + 1}"
+                       class="btn btn-secondary btn-sm">
+                    </a>
+                    <span th:if="${i == currentPage}" 
+                          th:text="${i + 1}"
+                          class="btn btn-primary btn-sm"
+                          style="cursor: default;">
+                    </span>
+                </span>
+                
+                <!-- Next Button -->
+                <a th:if="${currentPage < totalPages - 1}" 
+                   th:href="${searchName != null or searchCategory != null or searchMinPrice != null or searchMaxPrice != null ? 
+                             '/products/advanced-search?page=' + (currentPage + 1) + '&size=10&name=' + (searchName ?: '') + '&category=' + (searchCategory ?: '') + '&minPrice=' + (searchMinPrice ?: '') + '&maxPrice=' + (searchMaxPrice ?: '') : 
+                             (keyword != null ? '/products/search?keyword=' + keyword + '&page=' + (currentPage + 1) + '&size=10' : 
+                             '/products?page=' + (currentPage + 1) + '&size=10&category=' + (selectedCategory ?: '') + '&sortBy=' + (sortBy ?: '') + '&sortDir=' + (sortDir ?: ''))}"
+                   class="btn btn-secondary btn-sm">
+                    Next →
+                </a>
+                <span th:if="${currentPage >= totalPages - 1}" class="btn btn-secondary btn-sm" style="opacity: 0.5; cursor: not-allowed;">
+                    Next →
+                </span>
+            </div>
+            
+            <!-- Page Info -->
+            <div style="margin-top: 10px; color: #666;">
+                Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+            </div>
+        </div>
+        
         <!-- Empty State -->
         <div th:if="${products == null or products.isEmpty()}" class="empty-state">
-            <p>No products found. Add your first product!</p>
+            <p>No products found.</p>
         </div>
     </div>
+    
+    <script>
+        function toggleAdvancedSearch() {
+            const form = document.getElementById('advancedSearchForm');
+            const toggleLink = document.querySelector('.toggle-search');
+            
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+                toggleLink.textContent = '🔼 Hide Advanced Search';
+            } else {
+                form.style.display = 'none';
+                toggleLink.textContent = '🔍 Show Advanced Search';
+            }
+        }
+        
+        function clearAdvancedSearch() {
+            document.getElementById('name').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('minPrice').value = '';
+            document.getElementById('maxPrice').value = '';
+        }
+        
+        function clearFilters() {
+            window.location.href = '/products';
+        }
+        
+        // Show advanced search form if any search parameters are present
+        window.onload = function() {
+            const hasSearchParams = [
+                '[[${searchName}]]',
+                '[[${searchCategory}]]',
+                '[[${searchMinPrice}]]',
+                '[[${searchMaxPrice}]]'
+            ].some(param => param && param !== 'null' && param !== '');
+            
+            if (hasSearchParams) {
+                const advForm = document.getElementById('advancedSearchForm');
+                if (advForm) {
+                    advForm.style.display = 'block';
+                    document.querySelector('.toggle-search').textContent = '🔼 Hide Advanced Search';
+                }
+            }
+        };
+    </script>
 </body>
 </html>
